@@ -2,11 +2,14 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
-from sklearn.preprocessing import LabelEncoder, StandardScaler, MinMaxScaler
+from sklearn.preprocessing import LabelEncoder, OneHotEncoder, StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import SVC
+from sklearn.svm import SVC, SVR
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.metrics import mean_squared_error, mean_absolute_error
 
 def main():
 
@@ -57,7 +60,7 @@ def main():
 
     plt.figure(figsize=(8, 6))
     sns.heatmap(df[importantFeatures].corr(), annot = True, cmap= "coolwarm")
-    plt.show()
+    #plt.show()
 
     df2 = df[importantFeatures]
     y = df2["diagnosis"].values
@@ -96,6 +99,74 @@ def main():
     score = svc.score(x_test, y_test)
     print("SVC SCORE: ", score)
 
+    dfInsurance = pd.read_csv("insurance.csv")
+    dfInsurance.dropna(inplace = True)
+    print(dfInsurance.head())
 
+    #ohEncoder = OneHotEncoder()
+
+    dfInsurance["sex"] = labelEncoder.fit_transform(dfInsurance["sex"])
+    dfInsurance["smoker"] = labelEncoder.fit_transform(dfInsurance["smoker"])
+    dfInsurance["region"] = labelEncoder.fit_transform(dfInsurance["region"])
+
+    print(dfInsurance.head())
+
+    sns.pairplot(dfInsurance)
+
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(dfInsurance, annot = True, cmap= "coolwarm")
+    
+    plt.figure(figsize = (20, 10))
+    sns.boxplot(dfInsurance)
+
+    #plt.show()
+
+    df3 = dfInsurance
+    y = dfInsurance["charges"].values
+    
+    df3.drop(columns= "charges", inplace= True)
+    importantFeatures = dfInsurance.columns
+    
+    print(importantFeatures)
+
+    x = df3[importantFeatures].values
+
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size= 0.2, random_state= 0)
+    x_val, x_test, y_val, y_test = train_test_split(x_test, y_test, test_size= 0.5, random_state= 0)
+
+    print(len(x_train), len(x_val), len(x_test))
+
+    modelDTR = DecisionTreeRegressor()
+    modelDTR.fit(x_train, y_train)
+
+    yPredDTR = modelDTR.predict(x_test)
+
+    scoreDTR = modelDTR.score(x_test, y_test)
+    print("R2 score of Decision Tree: ", scoreDTR)
+
+    print("MSE: " + str(mean_squared_error(y_test, yPredDTR)))
+    print("MAE: " + str(mean_absolute_error(y_test, yPredDTR)))
+
+    modelRF = RandomForestRegressor(criterion = "friedman_mse", max_leaf_nodes = 100).fit(x_train, y_train)
+    scoreRF = modelRF.score(x_test, y_test)
+    yPredRF = modelRF.predict(x_test)
+    print("R2 score of Random Forest: ", scoreRF)
+
+    print("MSE: " + str(mean_squared_error(y_test, yPredRF)))
+    print("MAE: " + str(mean_absolute_error(y_test, yPredRF)))
+
+    modelSVR = SVR(kernel= "linear")
+    modelSVR.fit(x_train, y_train)
+
+    yPredSVR = modelSVR.predict(x_test)
+    scoreSVR = modelSVR.score(x_test, y_test)
+
+    print("R2 score of SVR: ", scoreSVR)
+
+    print("MSE: " + str(mean_squared_error(y_test, yPredSVR)))
+    print("MAE: " + str(mean_absolute_error(y_test, yPredSVR)))
+
+
+    
 
 main()
